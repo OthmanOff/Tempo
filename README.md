@@ -94,6 +94,27 @@ Les tests couvrent notamment le moteur de planification, le parsing ICS, les
 contrats de modèles, le quick-add, les mutations locales atomiques, la file de
 synchronisation et les calculs de rappels.
 
+## Déploiement Dockploy
+
+Créer une application **Docker Compose** à partir du dépôt et sélectionner
+`docker-compose.dockploy.yml`. Copier les variables de
+`.env.dockploy.example` dans l'onglet Environment de Dockploy, puis remplacer :
+
+- `API_URL` par l'URL HTTPS publique de l'API ;
+- `CORS_ORIGINS` par l'URL HTTPS publique du frontend (plusieurs valeurs possibles,
+  séparées par des virgules) ;
+- `APP_KEY` par la valeur produite avec `cd backend && node ace generate:key` ;
+- `DB_PASSWORD` par un secret long et aléatoire.
+
+Associer ensuite le domaine API au service `backend`, port `3333`, et le domaine
+principal au service `web`, port `80`. Le conteneur backend attend PostgreSQL,
+exécute automatiquement les migrations puis démarre l'API. Le volume
+`tempo_postgres_data` conserve la base entre les redéploiements.
+
+`API_URL` est un argument de build Flutter : toute modification nécessite de
+reconstruire le service `web`. Ne jamais placer les fichiers `.env` de production
+dans Git.
+
 ## Limites connues
 
 - PostgreSQL doit être disponible pour les migrations et les tests d'intégration.
