@@ -32,24 +32,50 @@ class _LoginPageState extends ConsumerState<LoginPage> {
     });
     final session = ref.watch(sessionControllerProvider);
     return Scaffold(
-      body: Center(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(24),
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 420),
-            child: Card(
+      body: SafeArea(
+        child: Center(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(24),
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 400),
               child: Padding(
-                padding: const EdgeInsets.all(24),
+                padding: const EdgeInsets.symmetric(horizontal: 8),
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    const Icon(Icons.calendar_month, size: 56),
-                    const SizedBox(height: 12),
-                    Text(
-                      'Tempo',
-                      style: Theme.of(context).textTheme.headlineMedium,
+                    Align(
+                      alignment: Alignment.centerLeft,
+                      child: Container(
+                        width: 48,
+                        height: 48,
+                        decoration: BoxDecoration(
+                          color: Theme.of(context).colorScheme.onSurface,
+                          borderRadius: BorderRadius.circular(14),
+                        ),
+                        child: Icon(
+                          Icons.calendar_today_rounded,
+                          size: 24,
+                          color: Theme.of(context).colorScheme.surface,
+                        ),
+                      ),
                     ),
-                    const SizedBox(height: 24),
+                    const SizedBox(height: 28),
+                    Text(
+                      _register ? 'Créer votre espace' : 'Bon retour.',
+                      style: Theme.of(context).textTheme.headlineLarge,
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      _register
+                          ? 'Un agenda simple pour garder le contrôle de votre temps.'
+                          : 'Connectez-vous pour retrouver votre agenda Tempo.',
+                      style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                        height: 1.4,
+                      ),
+                    ),
+                    const SizedBox(height: 32),
                     if (_register) ...[
                       TextField(
                         controller: _name,
@@ -82,8 +108,11 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                         ),
                       ),
                     ],
-                    const SizedBox(height: 20),
+                    const SizedBox(height: 24),
                     FilledButton(
+                      style: FilledButton.styleFrom(
+                        minimumSize: const Size.fromHeight(52),
+                      ),
                       onPressed: session.isLoading ? null : _submit,
                       child: session.isLoading
                           ? const SizedBox.square(
@@ -94,6 +123,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                               _register ? 'Créer le compte' : 'Se connecter',
                             ),
                     ),
+                    const SizedBox(height: 8),
                     TextButton(
                       onPressed: session.isLoading
                           ? null

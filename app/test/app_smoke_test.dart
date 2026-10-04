@@ -7,7 +7,7 @@ void main() {
     await tester.pumpWidget(const ProviderScope(child: AgendaApp()));
     await tester.pump(const Duration(milliseconds: 200));
 
-    expect(find.text('Tempo'), findsOneWidget);
+    expect(find.text('Bon retour.'), findsOneWidget);
     expect(find.text('E-mail'), findsOneWidget);
     expect(find.text('Créer mon compte personnel'), findsOneWidget);
   });
