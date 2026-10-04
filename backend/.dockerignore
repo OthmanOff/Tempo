@@ -5,4 +5,3 @@ build
 !.env.example
 .git
 npm-debug.log
-tests
