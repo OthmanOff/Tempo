@@ -1,0 +1,26 @@
+# Editors and operating systems
+.idea/
+.vscode/
+.DS_Store
+
+# Local configuration
+**/.env
+**/.env.local
+
+# JavaScript / AdonisJS
+backend/node_modules/
+backend/build/
+backend/tmp/
+
+# Flutter / Dart
+app/.dart_tool/
+app/.flutter-plugins
+app/.flutter-plugins-dependencies
+app/.packages
+app/build/
+app/coverage/
+
+# Platform-generated files
+app/android/.gradle/
+app/ios/Pods/
+app/macos/Pods/
