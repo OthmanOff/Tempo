@@ -1,8 +1,15 @@
-// The legacy executor keeps web builds functional without external WASM assets.
-// It will be replaced by WasmDatabase when web becomes a deployment target.
-// ignore_for_file: deprecated_member_use
-
 import 'package:drift/drift.dart';
-import 'package:drift/web.dart';
+import 'package:drift/wasm.dart';
 
-QueryExecutor createDatabaseConnection() => WebDatabase('agenda');
+QueryExecutor createDatabaseConnection() {
+  return DatabaseConnection.delayed(
+    Future(() async {
+      final result = await WasmDatabase.open(
+        databaseName: 'agenda',
+        sqlite3Uri: Uri.parse('sqlite3.wasm'),
+        driftWorkerUri: Uri.parse('drift_worker.js'),
+      );
+      return result.resolvedExecutor;
+    }),
+  );
+}

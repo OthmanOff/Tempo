@@ -17,6 +17,10 @@ final activeUserProvider = StreamProvider<LocalUser?>((ref) {
 class SessionController extends AsyncNotifier<bool> {
   @override
   Future<bool> build() async {
+    // The offline database is required by every authenticated screen. Opening
+    // it here makes web setup failures visible immediately instead of letting
+    // authentication succeed before all task, project and event writes fail.
+    await ref.read(appDatabaseProvider).customSelect('SELECT 1').get();
     final session = await ref.read(authRepositoryProvider).restoreSession();
     ref.read(authTokenProvider.notifier).state = session?.token;
     ref.read(sessionUserProvider.notifier).state = session?.user;
