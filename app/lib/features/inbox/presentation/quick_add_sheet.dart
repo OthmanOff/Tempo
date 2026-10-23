@@ -45,16 +45,26 @@ class _QuickAddSheetState extends ConsumerState<QuickAddSheet> {
       return;
     }
     setState(() => saving = true);
-    final result = parser.parse(controller.text);
-    await ref
-        .read(taskRepositoryProvider)
-        .createTask(
-          userId: user.id,
-          title: result.title,
-          estimatedDurationMinutes: result.estimatedDurationMinutes,
-          scheduledStartAt: result.scheduledStartAt,
-        );
-    if (mounted) Navigator.of(context).pop();
+    try {
+      final result = parser.parse(controller.text);
+      await ref
+          .read(taskRepositoryProvider)
+          .createTask(
+            userId: user.id,
+            title: result.title,
+            estimatedDurationMinutes: result.estimatedDurationMinutes,
+            scheduledStartAt: result.scheduledStartAt,
+          );
+      if (mounted) Navigator.of(context).pop();
+    } catch (_) {
+      if (!mounted) return;
+      setState(() => saving = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Impossible de créer la tâche. Réessayez.'),
+        ),
+      );
+    }
   }
 
   @override

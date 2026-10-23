@@ -2,6 +2,7 @@ import 'package:agenda_app/core/database/app_database.dart';
 import 'package:agenda_app/core/theme/app_spacing.dart';
 import 'package:agenda_app/core/widgets/empty_state.dart';
 import 'package:agenda_app/features/auth/presentation/session_providers.dart';
+import 'package:agenda_app/features/inbox/presentation/quick_add_sheet.dart';
 import 'package:agenda_app/features/tasks/data/task_repository.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -30,7 +31,24 @@ class _TasksPageState extends ConsumerState<TasksPage> {
   Widget build(BuildContext context) {
     final user = ref.watch(activeUserProvider).asData?.value;
     return Scaffold(
-      appBar: AppBar(title: const Text('Tâches')),
+      appBar: AppBar(
+        title: const Text('Tâches'),
+        actions: [
+          IconButton(
+            tooltip: 'Créer une tâche',
+            onPressed: user == null
+                ? null
+                : () => showModalBottomSheet<void>(
+                    context: context,
+                    isScrollControlled: true,
+                    showDragHandle: true,
+                    builder: (_) => const QuickAddSheet(),
+                  ),
+            icon: const Icon(Icons.add),
+          ),
+          const SizedBox(width: 8),
+        ],
+      ),
       body: user == null
           ? const EmptyState(
               icon: Icons.person_outline,

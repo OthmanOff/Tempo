@@ -25,7 +25,14 @@ class ProjectRepository {
     return query.watch();
   }
 
-  Future<String> create({required String userId, required String name}) async {
+  Future<String> create({
+    required String userId,
+    required String name,
+    String? description,
+  }) async {
+    final cleanName = name.trim();
+    if (cleanName.isEmpty) throw ArgumentError('Le nom est obligatoire.');
+    final cleanDescription = description?.trim();
     final id = _uuid.v4();
     final timestamp = DateTime.now().toUtc();
     await _database.transaction(() async {
@@ -35,7 +42,10 @@ class ProjectRepository {
             ProjectsCompanion.insert(
               id: id,
               userId: userId,
-              name: name.trim(),
+              name: cleanName,
+              description: Value(
+                cleanDescription?.isEmpty == true ? null : cleanDescription,
+              ),
               createdAt: timestamp,
               updatedAt: timestamp,
             ),
@@ -46,7 +56,10 @@ class ProjectRepository {
         entityId: id,
         payload: {
           'id': id,
-          'name': name.trim(),
+          'name': cleanName,
+          'description': cleanDescription?.isEmpty == true
+              ? null
+              : cleanDescription,
           'updatedAt': timestamp.toIso8601String(),
         },
       );

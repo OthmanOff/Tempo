@@ -20,6 +20,34 @@ class CalendarPage extends ConsumerStatefulWidget {
 class _CalendarPageState extends ConsumerState<CalendarPage> {
   DateTime selectedDate = DateTime.now();
 
+  Future<void> _createEvent(LocalUser user) async {
+    await showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      showDragHandle: true,
+      builder: (_) => _CreateEventSheet(
+        initialDate: selectedDate,
+        onSave:
+            ({
+              required title,
+              required startAt,
+              required endAt,
+              required description,
+              required location,
+            }) => ref
+                .read(calendarRepositoryProvider)
+                .createEvent(
+                  userId: user.id,
+                  title: title,
+                  startAt: startAt,
+                  endAt: endAt,
+                  description: description,
+                  location: location,
+                ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final user = ref.watch(activeUserProvider).asData?.value;
@@ -28,6 +56,11 @@ class _CalendarPageState extends ConsumerState<CalendarPage> {
       appBar: AppBar(
         title: const Text('Calendrier'),
         actions: [
+          IconButton(
+            tooltip: 'Créer un événement',
+            onPressed: user == null ? null : () => _createEvent(user),
+            icon: const Icon(Icons.add),
+          ),
           IconButton(
             tooltip: 'Jour précédent',
             onPressed: () => setState(
@@ -117,6 +150,200 @@ class _CalendarPageState extends ConsumerState<CalendarPage> {
                 );
               },
             ),
+    );
+  }
+}
+
+typedef _SaveEvent =
+    Future<void> Function({
+      required String title,
+      required DateTime startAt,
+      required DateTime endAt,
+      required String description,
+      required String location,
+    });
+
+class _CreateEventSheet extends StatefulWidget {
+  const _CreateEventSheet({required this.initialDate, required this.onSave});
+
+  final DateTime initialDate;
+  final _SaveEvent onSave;
+
+  @override
+  State<_CreateEventSheet> createState() => _CreateEventSheetState();
+}
+
+class _CreateEventSheetState extends State<_CreateEventSheet> {
+  final titleController = TextEditingController();
+  final descriptionController = TextEditingController();
+  final locationController = TextEditingController();
+  late DateTime date;
+  late TimeOfDay startTime;
+  late TimeOfDay endTime;
+  bool saving = false;
+
+  @override
+  void initState() {
+    super.initState();
+    date = DateTime(
+      widget.initialDate.year,
+      widget.initialDate.month,
+      widget.initialDate.day,
+    );
+    final now = DateTime.now();
+    final nextHour = now.hour == 23 ? 22 : now.hour + 1;
+    startTime = TimeOfDay(hour: nextHour, minute: 0);
+    endTime = TimeOfDay(hour: nextHour + 1, minute: 0);
+  }
+
+  @override
+  void dispose() {
+    titleController.dispose();
+    descriptionController.dispose();
+    locationController.dispose();
+    super.dispose();
+  }
+
+  DateTime _at(TimeOfDay time) =>
+      DateTime(date.year, date.month, date.day, time.hour, time.minute);
+
+  Future<void> _pickDate() async {
+    final selected = await showDatePicker(
+      context: context,
+      initialDate: date,
+      firstDate: DateTime(2020),
+      lastDate: DateTime(2100),
+    );
+    if (selected != null) setState(() => date = selected);
+  }
+
+  Future<void> _pickTime({required bool start}) async {
+    final selected = await showTimePicker(
+      context: context,
+      initialTime: start ? startTime : endTime,
+    );
+    if (selected == null) return;
+    setState(() {
+      if (start) {
+        startTime = selected;
+        if (!_at(endTime).isAfter(_at(startTime))) {
+          final end = _at(startTime).add(const Duration(hours: 1));
+          endTime = TimeOfDay.fromDateTime(end);
+        }
+      } else {
+        endTime = selected;
+      }
+    });
+  }
+
+  Future<void> _save() async {
+    if (saving || titleController.text.trim().isEmpty) return;
+    final start = _at(startTime);
+    final end = _at(endTime);
+    if (!end.isAfter(start)) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('La fin doit être après le début.')),
+      );
+      return;
+    }
+    setState(() => saving = true);
+    try {
+      await widget.onSave(
+        title: titleController.text,
+        startAt: start,
+        endAt: end,
+        description: descriptionController.text,
+        location: locationController.text,
+      );
+      if (mounted) Navigator.pop(context);
+    } catch (_) {
+      if (!mounted) return;
+      setState(() => saving = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Impossible de créer l’événement.')),
+      );
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final bottom = MediaQuery.viewInsetsOf(context).bottom;
+    return SingleChildScrollView(
+      padding: EdgeInsets.fromLTRB(20, 8, 20, 20 + bottom),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Nouvel événement',
+            style: Theme.of(context).textTheme.titleLarge,
+          ),
+          const SizedBox(height: 16),
+          TextField(
+            controller: titleController,
+            autofocus: true,
+            textCapitalization: TextCapitalization.sentences,
+            decoration: const InputDecoration(
+              labelText: 'Titre',
+              prefixIcon: Icon(Icons.event_outlined),
+            ),
+          ),
+          const SizedBox(height: 12),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              OutlinedButton.icon(
+                onPressed: _pickDate,
+                icon: const Icon(Icons.calendar_today_outlined),
+                label: Text(DateFormat.yMMMd('fr_FR').format(date)),
+              ),
+              OutlinedButton.icon(
+                onPressed: () => _pickTime(start: true),
+                icon: const Icon(Icons.schedule),
+                label: Text('Début ${startTime.format(context)}'),
+              ),
+              OutlinedButton.icon(
+                onPressed: () => _pickTime(start: false),
+                icon: const Icon(Icons.schedule_outlined),
+                label: Text('Fin ${endTime.format(context)}'),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          TextField(
+            controller: locationController,
+            decoration: const InputDecoration(
+              labelText: 'Lieu (facultatif)',
+              prefixIcon: Icon(Icons.place_outlined),
+            ),
+          ),
+          const SizedBox(height: 12),
+          TextField(
+            controller: descriptionController,
+            maxLines: 3,
+            decoration: const InputDecoration(
+              labelText: 'Notes (facultatives)',
+              alignLabelWithHint: true,
+            ),
+          ),
+          const SizedBox(height: 20),
+          SizedBox(
+            width: double.infinity,
+            child: FilledButton.icon(
+              onPressed: saving ? null : _save,
+              icon: saving
+                  ? const SizedBox(
+                      width: 18,
+                      height: 18,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  : const Icon(Icons.add),
+              label: const Text('Créer l’événement'),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
