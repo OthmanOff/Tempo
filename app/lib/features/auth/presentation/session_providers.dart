@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:agenda_app/core/database/app_database.dart';
 import 'package:agenda_app/core/sync/sync_engine.dart';
 import 'package:agenda_app/features/auth/data/auth_repository.dart';
@@ -23,9 +25,18 @@ class SessionController extends AsyncNotifier<bool> {
           .read(authRepositoryProvider)
           .login(email, password);
       ref.read(authTokenProvider.notifier).state = token;
-      await ref.read(syncEngineProvider.notifier).synchronize();
+      unawaited(_synchronizeInBackground());
       return true;
     });
+  }
+
+  Future<void> _synchronizeInBackground() async {
+    try {
+      await ref.read(syncEngineProvider.notifier).synchronize();
+    } catch (_) {
+      // Authentication succeeded. The sync engine keeps its own failure state
+      // and can be retried without sending the user back to the login screen.
+    }
   }
 
   Future<void> register(String name, String email, String password) async {
