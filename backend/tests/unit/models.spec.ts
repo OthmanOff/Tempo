@@ -3,6 +3,7 @@ import BaseSyncModel from '#models/base_sync_model'
 import { calendarSourceTypes } from '#models/calendar_source'
 import { eventSources } from '#models/event'
 import { taskPriorities, taskStatuses } from '#models/task'
+import User from '#models/user'
 
 test.group('Agenda model contracts', () => {
   test('generates a UUID when the client did not provide one', ({ assert }) => {
@@ -35,5 +36,16 @@ test.group('Agenda model contracts', () => {
     assert.deepEqual(taskPriorities, ['none', 'low', 'medium', 'high', 'urgent'])
     assert.deepEqual(eventSources, ['local', 'ics', 'external'])
     assert.deepEqual(calendarSourceTypes, ['local', 'ics_url', 'ics_file'])
+  })
+
+  test('hashes a plain password once through the auth model hook', async ({ assert }) => {
+    const password = 'correct-horse-battery-staple'
+    const user = new User()
+    user.passwordHash = password
+
+    await User.hashPassword(user)
+
+    assert.notEqual(user.passwordHash, password)
+    assert.isTrue(await user.verifyPassword(password))
   })
 })
