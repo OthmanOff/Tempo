@@ -5,7 +5,11 @@ import 'package:agenda_app/core/sync/sync_engine.dart';
 import 'package:agenda_app/features/auth/data/auth_repository.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+final sessionUserProvider = StateProvider<LocalUser?>((ref) => null);
+
 final activeUserProvider = StreamProvider<LocalUser?>((ref) {
+  final sessionUser = ref.watch(sessionUserProvider);
+  if (sessionUser != null) return Stream.value(sessionUser);
   final database = ref.watch(appDatabaseProvider);
   return (database.select(database.users)..limit(1)).watchSingleOrNull();
 });
@@ -13,18 +17,20 @@ final activeUserProvider = StreamProvider<LocalUser?>((ref) {
 class SessionController extends AsyncNotifier<bool> {
   @override
   Future<bool> build() async {
-    final token = await ref.read(authRepositoryProvider).restoreToken();
-    ref.read(authTokenProvider.notifier).state = token;
-    return token != null;
+    final session = await ref.read(authRepositoryProvider).restoreSession();
+    ref.read(authTokenProvider.notifier).state = session?.token;
+    ref.read(sessionUserProvider.notifier).state = session?.user;
+    return session != null;
   }
 
   Future<void> login(String email, String password) async {
     state = const AsyncLoading();
     state = await AsyncValue.guard(() async {
-      final token = await ref
+      final session = await ref
           .read(authRepositoryProvider)
           .login(email, password);
-      ref.read(authTokenProvider.notifier).state = token;
+      ref.read(authTokenProvider.notifier).state = session.token;
+      ref.read(sessionUserProvider.notifier).state = session.user;
       unawaited(_synchronizeInBackground());
       return true;
     });
@@ -42,10 +48,11 @@ class SessionController extends AsyncNotifier<bool> {
   Future<void> register(String name, String email, String password) async {
     state = const AsyncLoading();
     state = await AsyncValue.guard(() async {
-      final token = await ref
+      final session = await ref
           .read(authRepositoryProvider)
           .register(name, email, password);
-      ref.read(authTokenProvider.notifier).state = token;
+      ref.read(authTokenProvider.notifier).state = session.token;
+      ref.read(sessionUserProvider.notifier).state = session.user;
       return true;
     });
   }
@@ -53,6 +60,7 @@ class SessionController extends AsyncNotifier<bool> {
   Future<void> logout() async {
     await ref.read(authRepositoryProvider).logout();
     ref.read(authTokenProvider.notifier).state = null;
+    ref.read(sessionUserProvider.notifier).state = null;
     state = const AsyncData(false);
   }
 }
