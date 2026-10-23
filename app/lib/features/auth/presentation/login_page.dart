@@ -53,10 +53,13 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                           color: Theme.of(context).colorScheme.onSurface,
                           borderRadius: BorderRadius.circular(14),
                         ),
-                        child: Icon(
-                          Icons.calendar_today_rounded,
-                          size: 24,
-                          color: Theme.of(context).colorScheme.surface,
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(14),
+                          child: Image.asset(
+                            'assets/branding/tempo_logo.png',
+                            fit: BoxFit.cover,
+                            semanticLabel: 'Logo Tempo',
+                          ),
                         ),
                       ),
                     ),

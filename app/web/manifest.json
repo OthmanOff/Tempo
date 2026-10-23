@@ -1,13 +1,16 @@
 {
-    "name": "agenda_app",
-    "short_name": "agenda_app",
-    "start_url": ".",
+    "id": "/",
+    "name": "Tempo — Agenda personnel",
+    "short_name": "Tempo",
+    "start_url": "/",
+    "scope": "/",
     "display": "standalone",
-    "background_color": "#0175C2",
-    "theme_color": "#0175C2",
-    "description": "A new Flutter project.",
+    "background_color": "#FFFFFF",
+    "theme_color": "#FFFFFF",
+    "description": "Agenda, tâches et projets dans un espace personnel offline-first.",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
+    "categories": ["productivity", "utilities"],
     "icons": [
         {
             "src": "icons/Icon-192.png",
@@ -30,6 +33,20 @@
             "sizes": "512x512",
             "type": "image/png",
             "purpose": "maskable"
+        }
+    ],
+    "shortcuts": [
+        {
+            "name": "Aujourd’hui",
+            "short_name": "Aujourd’hui",
+            "url": "/#/today",
+            "icons": [{ "src": "icons/Icon-192.png", "sizes": "192x192" }]
+        },
+        {
+            "name": "Calendrier",
+            "short_name": "Calendrier",
+            "url": "/#/calendar",
+            "icons": [{ "src": "icons/Icon-192.png", "sizes": "192x192" }]
         }
     ]
 }
