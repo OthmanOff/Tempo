@@ -14,7 +14,15 @@ class AuthRepository {
   final AppDatabase _database;
   final FlutterSecureStorage _storage;
 
-  Future<String?> restoreToken() => _storage.read(key: _tokenKey);
+  Future<String?> restoreToken() async {
+    try {
+      return await _storage.read(key: _tokenKey);
+    } catch (_) {
+      // Web secure storage requires HTTPS (localhost is the only exception).
+      // Keep the app usable with an in-memory session on an HTTP deployment.
+      return null;
+    }
+  }
 
   Future<String> login(String email, String password) => _authenticate(
     '/api/v1/auth/login',
@@ -50,11 +58,22 @@ class AuthRepository {
             deletedAt: Value(_date(user['deletedAt'])),
           ),
         );
-    await _storage.write(key: _tokenKey, value: token);
+    try {
+      await _storage.write(key: _tokenKey, value: token);
+    } catch (_) {
+      // The token is still returned to the session controller and remains
+      // usable until the page is refreshed. HTTPS restores persistence.
+    }
     return token;
   }
 
-  Future<void> logout() => _storage.delete(key: _tokenKey);
+  Future<void> logout() async {
+    try {
+      await _storage.delete(key: _tokenKey);
+    } catch (_) {
+      // There may be nothing to delete when secure storage is unavailable.
+    }
+  }
 
   DateTime? _date(dynamic value) =>
       value == null ? null : DateTime.parse(value as String).toUtc();
